@@ -3,7 +3,6 @@ package saramaprom
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,7 +19,7 @@ type Options struct {
 	Subsystem string
 
 	// Label specifies value of "label" label. Default "".
-	Label string
+	Labels map[string]string
 
 	// FlushInterval specifies interval between updating metrics. Default 1s.
 	FlushInterval time.Duration
@@ -57,7 +56,7 @@ func ExportMetrics(ctx context.Context, metricsRegistry MetricsRegistry, opt Opt
 		customMetrics:    make(map[string]*customCollector),
 		histogramBuckets: []float64{0.05, 0.1, 0.25, 0.50, 0.75, 0.9, 0.95, 0.99},
 		timerBuckets:     []float64{0.50, 0.95, 0.99, 0.999},
-		mutex:            new(sync.Mutex),
+		labelsMap:        make(map[string]labels),
 	}
 
 	err := exp.update()

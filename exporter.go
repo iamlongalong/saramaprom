@@ -11,6 +11,8 @@ import (
 	"github.com/rcrowley/go-metrics"
 )
 
+type labels map[string]string
+
 type exporter struct {
 	opt              Options
 	registry         MetricsRegistry
@@ -19,7 +21,9 @@ type exporter struct {
 	customMetrics    map[string]*customCollector
 	histogramBuckets []float64
 	timerBuckets     []float64
-	mutex            *sync.Mutex
+	mu               sync.RWMutex
+
+	labelsMap map[string]labels
 }
 
 func (c *exporter) sanitizeName(key string) string {
@@ -85,11 +89,22 @@ func (c *exporter) metricNameAndLabels(metricName string) (newName string, label
 		// skip metrics for total
 		return newName, labels, true
 	}
-	labels = map[string]string{
-		"broker": broker,
-		"topic":  topic,
-		"label":  c.opt.Label,
+
+	var ok bool
+	c.mu.RLock()
+	labels, ok = c.labelsMap[metricName]
+	c.mu.RUnlock()
+
+	if !ok {
+		labels = c.opt.Labels
+		labels["broker"] = broker
+		labels["topic"] = topic
+
+		c.mu.Lock()
+		c.labelsMap[metricName] = labels
+		c.mu.Unlock()
 	}
+
 	return newName, labels, false
 }
 
@@ -111,7 +126,7 @@ func (c *exporter) histogramFromNameAndMetric(name string, goMetric interface{},
 	key := c.createKey(name)
 	collector, exists := c.customMetrics[key]
 	if !exists {
-		collector = newCustomCollector(c.mutex)
+		collector = newCustomCollector(&c.mu)
 		c.promRegistry.MustRegister(collector)
 		c.customMetrics[key] = collector
 	}
@@ -163,9 +178,9 @@ func (c *exporter) histogramFromNameAndMetric(name string, goMetric interface{},
 	if err != nil {
 		return err
 	}
-	c.mutex.Lock()
+	c.mu.Lock()
 	collector.metric = hist
-	c.mutex.Unlock()
+	c.mu.Unlock()
 	return nil
 }
 
@@ -210,10 +225,10 @@ type customCollector struct {
 	prometheus.Collector
 
 	metric prometheus.Metric
-	mutex  *sync.Mutex
+	mutex  sync.Locker
 }
 
-func newCustomCollector(mu *sync.Mutex) *customCollector {
+func newCustomCollector(mu sync.Locker) *customCollector {
 	return &customCollector{
 		mutex: mu,
 	}

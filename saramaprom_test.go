@@ -61,7 +61,7 @@ func TestLabels(t *testing.T) {
 	err = saramaprom.ExportMetrics(ctx, metricsRegistry, saramaprom.Options{
 		Namespace:          "test",
 		Subsystem:          "subsys",
-		Label:              "test-label",
+		Labels:             map[string]string{"hello": "world"},
 		PrometheusRegistry: promRegistry,
 	})
 	require.NoError(t, err)
