@@ -57,6 +57,7 @@ func ExportMetrics(ctx context.Context, metricsRegistry MetricsRegistry, opt Opt
 		histogramBuckets: []float64{0.05, 0.1, 0.25, 0.50, 0.75, 0.9, 0.95, 0.99},
 		timerBuckets:     []float64{0.50, 0.95, 0.99, 0.999},
 		labelsMap:        make(map[string]labels),
+		metricsNameMap:   map[string]bool{},
 	}
 
 	err := exp.update()

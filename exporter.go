@@ -23,7 +23,8 @@ type exporter struct {
 	timerBuckets     []float64
 	mu               sync.RWMutex
 
-	labelsMap map[string]labels
+	labelsMap      map[string]labels
+	metricsNameMap map[string]bool
 }
 
 func (c *exporter) sanitizeName(key string) string {
@@ -56,6 +57,14 @@ func (c *exporter) gaugeFromNameAndValue(name string, val float64) error {
 		for labelName := range labels {
 			labelNames = append(labelNames, labelName)
 		}
+
+		c.mu.Lock()
+		metricName := c.sanitizeName(shortName)
+		if c.metricsNameMap[metricName] {
+			return nil
+		}
+		c.metricsNameMap[metricName] = true
+		c.mu.Unlock()
 
 		g := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: c.sanitizeName(c.opt.Namespace),
@@ -163,11 +172,19 @@ func (c *exporter) histogramFromNameAndMetric(name string, goMetric interface{},
 		return nil
 	}
 
+	c.mu.Lock()
+	metricName := c.sanitizeName(name) + "_" + typeName
+	if c.metricsNameMap[metricName] {
+		return nil
+	}
+	c.metricsNameMap[metricName] = true
+	c.mu.Unlock()
+
 	desc := prometheus.NewDesc(
 		prometheus.BuildFQName(
 			c.sanitizeName(c.opt.Namespace),
 			c.sanitizeName(c.opt.Subsystem),
-			c.sanitizeName(name)+"_"+typeName,
+			metricName,
 		),
 		c.sanitizeName(name),
 		nil,
