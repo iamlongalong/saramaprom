@@ -61,6 +61,7 @@ func (c *exporter) gaugeFromNameAndValue(name string, val float64) error {
 		c.mu.Lock()
 		metricName := c.sanitizeName(shortName)
 		if c.metricsNameMap[metricName] {
+			c.mu.Unlock()
 			return nil
 		}
 		c.metricsNameMap[metricName] = true
@@ -106,8 +107,12 @@ func (c *exporter) metricNameAndLabels(metricName string) (newName string, label
 
 	if !ok {
 		labels = c.opt.Labels
-		labels["broker"] = broker
-		labels["topic"] = topic
+		if broker != "" {
+			labels["broker"] = broker
+		}
+		if topic != "" {
+			labels["topic"] = topic
+		}
 
 		c.mu.Lock()
 		c.labelsMap[metricName] = labels
@@ -175,6 +180,7 @@ func (c *exporter) histogramFromNameAndMetric(name string, goMetric interface{},
 	c.mu.Lock()
 	metricName := c.sanitizeName(name) + "_" + typeName
 	if c.metricsNameMap[metricName] {
+		c.mu.Unlock()
 		return nil
 	}
 	c.metricsNameMap[metricName] = true
@@ -242,22 +248,22 @@ type customCollector struct {
 	prometheus.Collector
 
 	metric prometheus.Metric
-	mutex  sync.Locker
+	mu     sync.Locker
 }
 
 func newCustomCollector(mu sync.Locker) *customCollector {
 	return &customCollector{
-		mutex: mu,
+		mu: mu,
 	}
 }
 
 func (c *customCollector) Collect(ch chan<- prometheus.Metric) {
-	c.mutex.Lock()
+	c.mu.Lock()
 	if c.metric != nil {
 		val := c.metric
 		ch <- val
 	}
-	c.mutex.Unlock()
+	c.mu.Unlock()
 }
 
 func (c *customCollector) Describe(_ chan<- *prometheus.Desc) {
