@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/iimos/saramaprom"
+	"github.com/iamlongalong/saramaprom"
 )
 
 func TestMetricCreation(t *testing.T) {

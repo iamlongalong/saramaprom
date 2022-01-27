@@ -1,4 +1,4 @@
-module github.com/iimos/saramaprom
+module github.com/iamlongalong/saramaprom
 
 go 1.13
 
