@@ -1,6 +1,6 @@
 # saramaprom
-[![GoDoc](https://godoc.org/github.com/iimos/saramaprom?status.png)](http://godoc.org/github.com/iimos/saramaprom)
-[![Go Report](https://goreportcard.com/badge/github.com/iimos/saramaprom)](https://goreportcard.com/report/github.com/iimos/saramaprom)
+[![GoDoc](https://godoc.org/github.com/iamlongalong/saramaprom?status.png)](http://godoc.org/github.com/iamlongalong/saramaprom)
+[![Go Report](https://goreportcard.com/badge/github.com/iamlongalong/saramaprom)](https://goreportcard.com/report/github.com/iamlongalong/saramaprom)
 
 This is a prometheus metrics reporter for the [sarama](https://github.com/Shopify/sarama) library. 
 It is based on https://github.com/deathowl/go-metrics-prometheus library.
@@ -10,7 +10,7 @@ Because `go-metrics-prometheus` is a general solution it reports metrics with no
 
 ## Installation
 ```console
-go get github.com/iimos/saramaprom
+go get github.com/iamlongalong/saramaprom
 ```
 
 ## Usage
@@ -19,7 +19,7 @@ go get github.com/iimos/saramaprom
 import (
     "context"
     "github.com/Shopify/sarama"
-    "github.com/iimos/saramaprom"
+    "github.com/iamlongalong/saramaprom"
 )
 
 ctx := context.Background()
@@ -38,8 +38,8 @@ type Options struct {
 	Namespace string
 	Subsystem string
 
-	// Label specifies value of "label" label. Default "".
-	Label string
+	// Label specifies value of label. Default nil.
+	Labels map[string]string
 
 	// FlushInterval specifies interval between updating metrics. Default 1s.
 	FlushInterval time.Duration
@@ -80,9 +80,14 @@ sarama_response_size_histogram
 Every metric have three labels:
 * broker – kafka broker id
 * topic – kafka topic name
-* label – custom label to distinguish different consumers/producers
+* labels – custom labels to distinguish different consumers/producers
 
 
 ## Requirements
 
 Go 1.13 or above.
+
+
+## ps
+
+this project is based on [saramaprom](https://github.com/iimos/saramaprom)
